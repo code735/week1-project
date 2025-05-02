@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -29,8 +29,8 @@ model Post {
   type     String
   content  String
   likes    Int      @default(0)
-  authorId String
-  author   User     @relation(fields: [authorId], references: [id])
+  authorId String?
+  author   User?     @relation(fields: [authorId], references: [id])
   date     DateTime @default(now())
 }
 
