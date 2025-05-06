@@ -12,14 +12,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateUser = void 0;
 const client_1 = require("@prisma/client");
+const crypto_1 = require("crypto");
 const prisma = new client_1.PrismaClient();
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
+const zod_1 = require("zod");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const port = process.env.PORT;
+const userSchema = zod_1.z.object({
+    name: zod_1.z.string().min(1),
+    email: zod_1.z.string().email(),
+    password: zod_1.z.string().min(8)
+});
+const validateUser = (req, res, next) => {
+    const result = userSchema.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({
+            error: "Validation failed",
+            issues: result.error.errors,
+        });
+    }
+    else {
+        req.body = result.data;
+        next();
+    }
+};
+exports.validateUser = validateUser;
 app.get("/", (req, res) => {
     res.send("hello");
 });
@@ -41,11 +63,13 @@ app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-app.post('/add-user', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/add-user', exports.validateUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { name, email, password } = req.body;
+        const userId = (_a = (0, crypto_1.randomUUID)()) === null || _a === void 0 ? void 0 : _a.slice(0, 6);
         const createUser = yield prisma.user.create({
-            data: { name, email, password }
+            data: { id: userId, name, email, password }
         });
         res.status(200).json({ createUser });
     }
