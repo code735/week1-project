@@ -63,7 +63,7 @@ app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-app.post('/add-user', exports.validateUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/add-user', exports.validateUser, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { name, email, password } = req.body;
@@ -75,7 +75,8 @@ app.post('/add-user', exports.validateUser, (req, res) => __awaiter(void 0, void
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
+        // res.status(500).json({ error: "Internal server error", message: error })
     }
 }));
 app.put('/update-user/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -106,6 +107,13 @@ app.delete("/delete-user/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
     }
     prisma.user.delete;
 }));
+app.use((err, req, res, next) => {
+    const status = err.status || 500;
+    res.status(status).json({
+        message: err.message || "Internal server error",
+        stack: err.stack
+    });
+});
 app.listen(port, () => {
     console.log(`server is listening on http://localhost:${port}`);
 });

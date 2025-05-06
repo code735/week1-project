@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 import dotenv from "dotenv";
 dotenv.config();
-import express, { NextFunction, Request, Response } from "express";
+import express, { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { z } from 'zod';
 const app = express();
 app.use(express.json())
@@ -30,6 +30,12 @@ export const validateUser = (req: Request, res: Response, next: NextFunction): v
       next(); 
     }
 };
+
+interface CustomError extends Error {
+    status?: number;
+}
+
+
 
 
 app.get("/", (req, res) => {
@@ -59,7 +65,7 @@ app.get("/users", async (req, res) => {
     }
 })
 
-app.post('/add-user', validateUser, async (req, res) => {
+app.post('/add-user', validateUser, async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
         const userId = randomUUID()?.slice(0,6);
@@ -71,7 +77,8 @@ app.post('/add-user', validateUser, async (req, res) => {
     }
     catch (error) {
         console.error(error)
-        res.status(500).json({ error: "Internal server error" })
+        next(error)
+        // res.status(500).json({ error: "Internal server error", message: error })
     }
 })
 
@@ -106,6 +113,16 @@ app.delete("/delete-user/:id", async (req, res) => {
         res.status(500).json({ error: 'Failed to delete user' });
     }
     prisma.user.delete
+})
+
+
+app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+    const status = err.status || 500;
+
+    res.status(status).json({
+        message: err.message || "Internal server error",
+        stack: err.stack
+    });
 })
 
 app.listen(port, () => {
