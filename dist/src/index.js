@@ -49,17 +49,37 @@ app.get("/", (req, res) => {
 });
 app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
-            const allUsers = yield prisma.user.findMany({
-                include: {
-                    posts: true
-                }
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        if (!page && !limit) {
+            const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
+                const allUsers = yield prisma.user.findMany({
+                    include: {
+                        posts: true
+                    }
+                });
+                return allUsers;
             });
-            return allUsers;
-        });
-        const usersWithPosts = yield getAllUsers();
-        console.log("usersWithPosts", usersWithPosts);
-        res.status(200).json(usersWithPosts);
+            const usersWithPosts = yield getAllUsers();
+            console.log("usersWithPosts", usersWithPosts);
+            res.status(200).json(usersWithPosts);
+        }
+        else {
+            const skip = (page - 1) * limit;
+            const [users, total] = yield Promise.all([
+                prisma.user.findMany({
+                    skip,
+                    take: limit,
+                }),
+                prisma.user.count()
+            ]);
+            const totalPages = Math.ceil(total / limit);
+            res.status(200).json({
+                data: users,
+                currentPage: page,
+                totalPages
+            });
+        }
     }
     catch (error) {
         res.status(500).json({ error: "Internal server error" });
