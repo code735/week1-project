@@ -24,7 +24,9 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const port = process.env.PORT;
 const userSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1),
+    name: zod_1.z.string()
+        .min(1, "Name is required")
+        .regex(/^[A-Za-z\s]+$/, "Name must contain only alphabets and spaces"),
     email: zod_1.z.string().email(),
     password: zod_1.z.string().min(8)
 });

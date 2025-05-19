@@ -12,7 +12,9 @@ const port = process.env.PORT;
 
 
 const userSchema = z.object({
-    name: z.string().min(1),
+    name: z.string()
+    .min(1, "Name is required")
+    .regex(/^[A-Za-z\s]+$/,"Name must contain only alphabets and spaces"),
     email: z.string().email(),
     password: z.string().min(8)
 })
