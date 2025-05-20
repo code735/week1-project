@@ -31,7 +31,7 @@ export function Navbar() {
 
   return (
     <header className="border-b">
-      <div className="container flex items-center justify-between h-16 px-4 md:px-6">
+      <div className="container flex items-center justify-between h-16 px-4 md:px-6 max-w-none w-full">
         <Link href="/" className="text-xl font-bold">
           BlogSite
         </Link>

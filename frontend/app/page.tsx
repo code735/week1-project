@@ -33,7 +33,7 @@ export default function Home() {
   ]
 
   return (
-    <div className="container py-10">
+    <div className="container p-10 w-full max-w-none">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Recent Posts</h1>
         <Link href="/posts/new">
