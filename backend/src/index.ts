@@ -140,6 +140,38 @@ app.delete("/delete-user/:id", async (req, res) => {
 	prisma.user.delete
 })
 
+app.post('/post-comment', async (req, res) => {
+	const { text, postId, userId } = req.body;
+
+	try {
+		const newComment = await prisma.comment.create({
+			data: { text, postId, userId }
+		})
+
+		res.status(200).json({ newComment })
+	}
+	catch (e) {
+		console.error(e)
+		res.status(500).json({ error: "Internal server error", message: e })
+	}
+
+})
+
+app.post('/upload-post', async (req, res) => {
+	const { caption, type, content, likes, authorId } = req.body;
+
+	try {
+		const newPost = await prisma.post.create({
+			data: { caption, type, content, likes, authorId }
+		})
+
+		res.status(200).json({ message: "Post created successfully", post: newPost })
+	}
+	catch (err) {
+		res.status(500).json({ error: "Internal Server error", message: err })
+	}
+})
+
 
 app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
 	const status = err.status || 500;

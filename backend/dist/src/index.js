@@ -129,6 +129,31 @@ app.delete("/delete-user/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
     }
     prisma.user.delete;
 }));
+app.post('/post-comment', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { text, postId, userId } = req.body;
+    try {
+        const newComment = yield prisma.comment.create({
+            data: { text, postId, userId }
+        });
+        res.status(200).json({ newComment });
+    }
+    catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Internal server error", message: e });
+    }
+}));
+app.post('/upload-post', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { caption, type, content, likes, authorId } = req.body;
+    try {
+        const newPost = yield prisma.post.create({
+            data: { caption, type, content, likes, authorId }
+        });
+        res.status(200).json({ message: "Post created successfully", post: newPost });
+    }
+    catch (err) {
+        res.status(500).json({ error: "Internal Server error", message: err });
+    }
+}));
 app.use((err, req, res, next) => {
     const status = err.status || 500;
     res.status(status).json({
