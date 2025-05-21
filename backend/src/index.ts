@@ -14,7 +14,8 @@ dotenv.config();
 app.use(express.json())
 app.use(cors())
 app.use('/api/users',userRoutes)
-app.use('/api/users',postRoutes)
+app.use('/api/posts',postRoutes)
+app.use('/api/comments',postRoutes)
 
 const userSchema = z.object({
 	name: z.string()
