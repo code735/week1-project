@@ -1,15 +1,20 @@
 import { PrismaClient } from '@prisma/client';
-import { error } from 'console';
 import { randomUUID } from 'crypto';
-const prisma = new PrismaClient();
 import dotenv from "dotenv";
-dotenv.config();
 import express, { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { date, promise, z } from 'zod';
+import userRoutes from '../routes/userRoutes'
+import postRoutes from '../routes/postRoutes'
+const cors = require('cors')
+const prisma = new PrismaClient();
 const app = express();
-app.use(express.json())
 const port = process.env.PORT;
+dotenv.config();
 
+app.use(express.json())
+app.use(cors())
+app.use('/api/users',userRoutes)
+app.use('/api/users',postRoutes)
 
 const userSchema = z.object({
 	name: z.string()
@@ -37,141 +42,9 @@ interface CustomError extends Error {
 	status?: number;
 }
 
-
-
-
 app.get("/", (req, res) => {
 	res.send("hello")
 })
-
-app.get("/users", async (req, res) => {
-	try {
-		const page = parseInt(req.query.page as string) || 1;
-		const limit = parseInt(req.query.limit as string) || 10;
-
-		if (!page && !limit) {
-			const getAllUsers = async () => {
-				const allUsers = await prisma.user.findMany({
-					include: {
-						posts: true
-					}
-				})
-
-				return allUsers;
-			}
-
-			const usersWithPosts = await getAllUsers();
-
-			console.log("usersWithPosts", usersWithPosts)
-
-			res.status(200).json(usersWithPosts)
-		}
-		else {
-			const skip = (page - 1) * limit;
-			const [users, total] = await Promise.all([
-				prisma.user.findMany({
-					skip,
-					take: limit,
-				}),
-				prisma.user.count()
-			]);
-
-			const totalPages = Math.ceil(total / limit)
-
-			res.status(200).json({
-				data: users,
-				currentPage: page,
-				totalPages
-			})
-		}
-	}
-	catch (error) {
-		res.status(500).json({ error: "Internal server error" })
-	}
-})
-
-app.post('/add-user', validateUser, async (req, res, next) => {
-	try {
-		const { name, email, password } = req.body;
-		const userId = randomUUID()?.slice(0, 6);
-		const createUser = await prisma.user.create({
-			data: { id: userId, name, email, password }
-		})
-
-		res.status(200).json({ createUser })
-	}
-	catch (error) {
-		console.error(error)
-		next(error)
-		// res.status(500).json({ error: "Internal server error", message: error })
-	}
-})
-
-app.put('/update-user/:id', async (req, res) => {
-	try {
-		const { id } = req.params;
-		const { name, email, password } = req.body;
-
-		const updatedUser = await prisma.user.update({
-			where: { id },
-			data: { name, email, password }
-		})
-
-		res.status(200).json(updatedUser)
-	}
-	catch (error) {
-		console.error(error)
-		res.status(500).json("Internal Server Error")
-	}
-})
-
-app.delete("/delete-user/:id", async (req, res) => {
-	try {
-		const { id } = req.params;
-		const deletedUser = await prisma.user.delete({
-			where: { id }
-		})
-
-		res.status(200).json(deletedUser)
-	}
-	catch (error) {
-		res.status(500).json({ error: 'Failed to delete user' });
-	}
-	prisma.user.delete
-})
-
-app.post('/post-comment', async (req, res) => {
-	const { text, postId, userId } = req.body;
-
-	try {
-		const newComment = await prisma.comment.create({
-			data: { text, postId, userId }
-		})
-
-		res.status(200).json({ newComment })
-	}
-	catch (e) {
-		console.error(e)
-		res.status(500).json({ error: "Internal server error", message: e })
-	}
-
-})
-
-app.post('/upload-post', async (req, res) => {
-	const { caption, type, content, likes, authorId } = req.body;
-
-	try {
-		const newPost = await prisma.post.create({
-			data: { caption, type, content, likes, authorId }
-		})
-
-		res.status(200).json({ message: "Post created successfully", post: newPost })
-	}
-	catch (err) {
-		res.status(500).json({ error: "Internal Server error", message: err })
-	}
-})
-
 
 app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
 	const status = err.status || 500;
