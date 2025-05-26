@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Menu, X } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
+import { AuthButton } from "@/components/auth/auth-button"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -26,12 +27,14 @@ export function Navbar() {
 
   const toggleMenu = () => setIsOpen(!isOpen)
 
-  const handleLogin = () => setIsLoggedIn(true)
-  const handleLogout = () => setIsLoggedIn(false)
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    // In a real app, you'd call your auth provider's signOut function here
+  }
 
   return (
     <header className="border-b">
-      <div className="container flex items-center justify-between h-16 px-4 md:px-6 max-w-none w-full">
+      <div className="container flex items-center justify-between h-16 px-4 md:px-6">
         <Link href="/" className="text-xl font-bold">
           BlogSite
         </Link>
@@ -69,14 +72,12 @@ export function Navbar() {
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    onClick={() => {
-                      handleLogin()
-                      toggleMenu()
-                    }}
-                  >
-                    Sign In
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <AuthButton mode="signin" className="w-full" />
+                    <AuthButton mode="signup" variant="outline" className="w-full">
+                      Sign Up
+                    </AuthButton>
+                  </div>
                 )}
               </div>
             )}
@@ -116,7 +117,12 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={handleLogin}>Sign In</Button>
+              <div className="flex items-center gap-2">
+                <AuthButton mode="signin" variant="ghost">
+                  Sign In
+                </AuthButton>
+                <AuthButton mode="signup">Sign Up</AuthButton>
+              </div>
             )}
           </nav>
         )}
