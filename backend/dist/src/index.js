@@ -4,14 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateUser = void 0;
-const client_1 = require("@prisma/client");
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const zod_1 = require("zod");
 const userRoutes_1 = __importDefault(require("../routes/userRoutes"));
 const postRoutes_1 = __importDefault(require("../routes/postRoutes"));
+const authRoutes_1 = __importDefault(require("../routes/authRoutes"));
 const cors = require('cors');
-const prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
 const port = process.env.PORT;
 dotenv_1.default.config();
@@ -20,6 +19,7 @@ app.use(cors());
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/posts', postRoutes_1.default);
 app.use('/api/comments', postRoutes_1.default);
+app.use('/api/auth', authRoutes_1.default);
 const userSchema = zod_1.z.object({
     name: zod_1.z.string()
         .min(1, "Name is required")

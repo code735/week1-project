@@ -5,8 +5,8 @@ import express, { ErrorRequestHandler, NextFunction, Request, Response } from "e
 import { date, promise, z } from 'zod';
 import userRoutes from '../routes/userRoutes'
 import postRoutes from '../routes/postRoutes'
+import authRoutes from '../routes/authRoutes'
 const cors = require('cors')
-const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT;
 dotenv.config();
@@ -16,6 +16,7 @@ app.use(cors())
 app.use('/api/users',userRoutes)
 app.use('/api/posts',postRoutes)
 app.use('/api/comments',postRoutes)
+app.use('/api/auth',authRoutes)
 
 const userSchema = z.object({
 	name: z.string()

@@ -8,15 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const crypto_1 = require("crypto");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5;
     yield prisma.post.deleteMany();
     yield prisma.user.deleteMany();
-    const users = [
+    let users = [
         { name: "Bruce Wayne", email: "wayne@enterprices.com", password: "12345678", id: (_a = (0, crypto_1.randomUUID)()) === null || _a === void 0 ? void 0 : _a.slice(0, 6) },
         { name: "Clark Kent", email: "clark@kent.com", password: "12345678", id: (_b = (0, crypto_1.randomUUID)()) === null || _b === void 0 ? void 0 : _b.slice(0, 6) },
         { name: "Diana Prince", email: "diana@themyscira.com", password: "12345678", id: (_c = (0, crypto_1.randomUUID)()) === null || _c === void 0 ? void 0 : _c.slice(0, 6) },
@@ -48,7 +52,15 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         { name: "Kara Danvers", email: "kara@supergirl.com", password: "12345678", id: (_4 = (0, crypto_1.randomUUID)()) === null || _4 === void 0 ? void 0 : _4.slice(0, 6) },
         { name: "Billy Batson", email: "billy@shazam.com", password: "12345678", id: (_5 = (0, crypto_1.randomUUID)()) === null || _5 === void 0 ? void 0 : _5.slice(0, 6) },
     ];
-    yield prisma.user.createMany({ data: users });
+    const getHashedPass = (pass) => __awaiter(void 0, void 0, void 0, function* () {
+        const password = yield bcrypt_1.default.hash(pass, 10);
+        return password;
+    });
+    const hashedPasswordUsers = yield Promise.all(users === null || users === void 0 ? void 0 : users.map((el) => __awaiter(void 0, void 0, void 0, function* () {
+        return Object.assign(Object.assign({}, el), { password: yield getHashedPass(el === null || el === void 0 ? void 0 : el.password) });
+    })));
+    // console.log("hashedPasswordUsers", hashedPasswordUsers)
+    yield prisma.user.createMany({ data: hashedPasswordUsers });
     const bruce = yield prisma.user.findUnique({ where: { email: "wayne@enterprices.com" } });
     const clark = yield prisma.user.findUnique({ where: { email: "clark@kent.com" } });
     if (!bruce || !clark)

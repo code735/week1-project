@@ -1,12 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import bcrypt from 'bcrypt';
+import { promise } from 'zod';
 const prisma = new PrismaClient();
 
 const main = async () => {
   await prisma.post.deleteMany();
   await prisma.user.deleteMany();
 
-  const users = [
+  let users = [
     { name: "Bruce Wayne", email: "wayne@enterprices.com", password: "12345678", id: randomUUID()?.slice(0, 6) },
     { name: "Clark Kent", email: "clark@kent.com", password: "12345678", id: randomUUID()?.slice(0, 6) },
     { name: "Diana Prince", email: "diana@themyscira.com", password: "12345678", id: randomUUID()?.slice(0, 6) },
@@ -39,7 +41,25 @@ const main = async () => {
     { name: "Billy Batson", email: "billy@shazam.com", password: "12345678", id: randomUUID()?.slice(0, 6) },
   ];
 
-  await prisma.user.createMany({ data: users });
+  const getHashedPass = async (pass: string) => {
+    const password = await bcrypt.hash(pass, 10)
+
+    return password;
+  }
+
+
+  const hashedPasswordUsers = await Promise.all(
+    users?.map(async (el) => {
+      return {
+        ...el,
+        password: await getHashedPass(el?.password)
+      }
+    })
+  );
+
+  // console.log("hashedPasswordUsers", hashedPasswordUsers)
+
+  await prisma.user.createMany({ data: hashedPasswordUsers });
 
   const bruce = await prisma.user.findUnique({ where: { email: "wayne@enterprices.com" } });
   const clark = await prisma.user.findUnique({ where: { email: "clark@kent.com" } });
