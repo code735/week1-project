@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginFunction = void 0;
+exports.signUpController = exports.loginController = void 0;
 const prismaClient_1 = __importDefault(require("../models/prismaClient"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const loginFunction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const loginController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: "email or password is not provided" });
@@ -23,19 +24,43 @@ const loginFunction = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const user = yield prismaClient_1.default.user.findUnique({ where: { email } });
         if (!user) {
-            return res.status(400).json({ error: "user not found" });
+            return res.status(401).json({ error: "email not found" });
         }
         const isPasswordSame = yield bcrypt_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password);
         if (isPasswordSame) {
-            // const token = jwt.sign(
-            //   {},
-            //   process.env.JWT_SECRET as String,
-            // )
-            return res.status(400).json({ error: "user not found" });
+            const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            return res.status(201).json({ error: "login successful", token });
+        }
+        else {
+            return res.status(401).json({ error: "password is incorrect" });
         }
     }
     catch (error) {
         return res.status(500).json({ error: "Internal Server Error", message: error });
     }
 });
-exports.loginFunction = loginFunction;
+exports.loginController = loginController;
+const signUpController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: "email or password is not provided" });
+    }
+    try {
+        const user = yield prismaClient_1.default.user.findUnique({ where: { email } });
+        if (!user) {
+            return res.status(401).json({ error: "email not found" });
+        }
+        const isPasswordSame = yield bcrypt_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password);
+        if (isPasswordSame) {
+            const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            return res.status(201).json({ error: "login successful", token });
+        }
+        else {
+            return res.status(401).json({ error: "password is incorrect" });
+        }
+    }
+    catch (error) {
+        return res.status(500).json({ error: "Internal Server Error", message: error });
+    }
+});
+exports.signUpController = signUpController;
