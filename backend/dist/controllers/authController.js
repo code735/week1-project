@@ -16,6 +16,7 @@ exports.signUpController = exports.loginController = void 0;
 const prismaClient_1 = __importDefault(require("../models/prismaClient"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const crypto_1 = require("crypto");
 const loginController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -41,23 +42,22 @@ const loginController = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.loginController = loginController;
 const signUpController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: "email or password is not provided" });
     }
     try {
         const user = yield prismaClient_1.default.user.findUnique({ where: { email } });
-        if (!user) {
-            return res.status(401).json({ error: "email not found" });
+        if (user) {
+            return res.status(401).json({ error: "user already exists" });
         }
-        const isPasswordSame = yield bcrypt_1.default.compare(password, user === null || user === void 0 ? void 0 : user.password);
-        if (isPasswordSame) {
-            const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            return res.status(201).json({ error: "login successful", token });
-        }
-        else {
-            return res.status(401).json({ error: "password is incorrect" });
-        }
+        const userId = (_a = (0, crypto_1.randomUUID)()) === null || _a === void 0 ? void 0 : _a.slice(0, 6);
+        const createUser = yield prismaClient_1.default.user.create({
+            data: { id: userId, email, password }
+        });
+        const token = jsonwebtoken_1.default.sign({ userId: userId, email: email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(201).json({ message: "user created successfully", token });
     }
     catch (error) {
         return res.status(500).json({ error: "Internal Server Error", message: error });

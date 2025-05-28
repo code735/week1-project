@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import prisma from "../models/prismaClient";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from "crypto";
 
 export const loginController = async (req: Request, res: Response): Promise<any> => {
 
@@ -20,11 +21,11 @@ export const loginController = async (req: Request, res: Response): Promise<any>
 
     const isPasswordSame = await bcrypt.compare(password, user?.password)
 
-    if ( isPasswordSame ) {
+    if (isPasswordSame) {
       const token = jwt.sign(
-        {userId: user.id, email: user.email},
+        { userId: user.id, email: user.email },
         process.env.JWT_SECRET as string,
-        { expiresIn: '1h'}
+        { expiresIn: '1h' }
       )
 
       return res.status(201).json({ error: "login successful", token })
@@ -34,7 +35,7 @@ export const loginController = async (req: Request, res: Response): Promise<any>
     }
   }
   catch (error) {
-      return res.status(500).json({ error: "Internal Server Error", message: error })
+    return res.status(500).json({ error: "Internal Server Error", message: error })
   }
 }
 
@@ -49,26 +50,27 @@ export const signUpController = async (req: Request, res: Response): Promise<any
   try {
     const user = await prisma.user.findUnique({ where: { email } })
 
-    if (!user) {
-      return res.status(401).json({ error: "email not found" })
+    if (user) {
+      return res.status(401).json({ error: "user already exists" })
     }
 
-    const isPasswordSame = await bcrypt.compare(password, user?.password)
 
-    if ( isPasswordSame ) {
-      const token = jwt.sign(
-        {userId: user.id, email: user.email},
-        process.env.JWT_SECRET as string,
-        { expiresIn: '1h'}
-      )
+    const userId = randomUUID()?.slice(0, 6);
 
-      return res.status(201).json({ error: "login successful", token })
-    }
-    else {
-      return res.status(401).json({ error: "password is incorrect" })
-    }
+    const createUser = await prisma.user.create({
+      data: { id: userId, email, password }
+    })
+
+    const token = jwt.sign(
+      { userId: userId, email: email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1h' }
+    )
+
+    res.status(201).json({ message: "user created successfully", token })
+
   }
   catch (error) {
-      return res.status(500).json({ error: "Internal Server Error", message: error })
+    return res.status(500).json({ error: "Internal Server Error", message: error })
   }
 }
